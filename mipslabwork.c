@@ -13,12 +13,11 @@
 #include <stdint.h>   /* Declarations of uint_32 and the like */
 #include <pic32mx.h>  /* Declarations of system-specific addresses etc */
 #include "mipslab.h"  /* Declatations for these labs */
-
-int mytime = 0x5957;
-int prime = 1234567;
-
+#include <IOShieldTemp.h>
+#include <IOShieldOled.h>
+#include <Wire.h>
 char textstring[] = "text, more text, and even more text!";
-int timeoutcounter = 0;
+
 
 
 
@@ -32,13 +31,8 @@ void light (void){
 /* Interrupt Service Routine */
 void user_isr( void )
  {  
-//IFSCLR(0) = 0x8000;
-  //IFSCLR(0) = 0x100;
-	//this is the interrupts for the switch
-	if(IFS(0) & 0x8000){
-		light();
-		IFSCLR(0) = 0x8000;
-	} 
+	static int timeoutcounter = 0;
+
 
 	// this is the interrupts for counting
 	//int buttonstatus = getbtns();
@@ -49,24 +43,32 @@ void user_isr( void )
 		timeoutcounter++;
 		if(timeoutcounter == 10){
 			timeoutcounter = 0;
-		
+			
+			
+			//rewrite time2string to handle temperature
 			time2string( textstring, mytime );
-			/*if(buttonstatus){
-				int switchstatus = getsw();
-				int time = buttontime(buttonstatus, switchstatus, mytime);
-				mytime = time;
-			} */
+		
 		display_string( 3, textstring );
 	display_update();
 	tick( &mytime );
 	
 	
-	
-		}
-	
-	} 
 }
 
+int get_temperature(void){
+	int tempC;
+	tempC = IOShieldTemp.getTemp();
+	return tempC;
+}
+int temp_F(temp){
+	temp = IOshieldTemp.convCtoF(temp)
+	return temp;
+}
+
+int temp_K(temp){
+	temp += 273;
+	return temp;
+}
 void timer(void){
 	T2CON =0x0070;
 	PR2 = 31250;
@@ -77,11 +79,6 @@ void timer(void){
 	
 	return;
 }
-void switch_enable(void){
-	IFSSET(0) = 0x8000;
-	IECSET(0) = 0x8000;
-	IPCSET(3) = 0xA000000;
-}
 /* Lab-specific initialization goes here */
 void labinit( void )
 {
@@ -90,9 +87,12 @@ void labinit( void )
     mask = ~mask; //~ betyder 2:nd komplement 
     *pointer = *pointer & mask;
     TRISDSET = 0xFE0;
+	 
+	 
 	timer();
-	switch_enable();
-	
+	//temperature
+	Serial.begin(9600);
+	IOShieldTemp.config(IOSHIELDTEMP_ONESHOT | IOSHIELDTEMP_RES11);
 	
 	enable_interrupt();
 	
@@ -104,10 +104,7 @@ void labinit( void )
 /* This function is called repetitively from the main program */
 void labwork( void )
 {
-	
-	prime = nextprime( prime );
-	display_string( 0, itoaconv( prime ) );
-	display_update();
+return;
 		
   } 
  
