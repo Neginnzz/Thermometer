@@ -18,7 +18,8 @@
 #include <Wire.h>
 char textstring[] = "text, more text, and even more text!";
 
-
+int format = 0;
+int temperature;
 
 
 void light (void){
@@ -104,6 +105,17 @@ void labinit( void )
 /* This function is called repetitively from the main program */
 void labwork( void )
 {
+	//check syntax for getTemp and switch!!!
+	temperature = getTemp();
+	switch (temperature){
+	case 1
+	temperature = temp_F(temperature);
+	break;
+	case 2
+	temperature = temp_K(temperature);
+	break;
+	}
+	
 return;
 		
   } 
