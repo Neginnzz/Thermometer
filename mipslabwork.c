@@ -21,6 +21,7 @@
 #define DISPLAY_COMMAND_DATA_MASK 0x10
 #define DISPLAY_RESET_PORT PORTG
 #define DISPLAY_RESET_MASK 0x200
+#define temp_offset 3
 
 /* Address of the temperature sensor on the I2C bus */
 #define TEMP_SENSOR_ADDR 0x48
@@ -48,7 +49,7 @@ uint32_t strlen(char *str) {
 }
 
 // translates temp to string
-char *fixed_to_string(uint16_t num, char *buf) {
+char *fixed_to_string_C(uint16_t num, char *buf) {
     bool neg = false;
     uint32_t n;
     char *tmp;
@@ -60,6 +61,84 @@ char *fixed_to_string(uint16_t num, char *buf) {
 
     buf += 4;
     n = num >> 8;
+    // to counter the temperature sensors misalignment
+    n -= temp_offset;
+
+    tmp = buf;
+    do {
+        *--tmp = (n % 10) + '0';
+        n /= 10;
+    } while (n);
+    if (neg)
+        *--tmp = '-';
+
+    n = num;
+    if (!(n & 0xFF)) {
+        *buf = 0;
+        return tmp;
+    }
+    *buf++ = '.';
+    while ((n &= 0xFF)) {
+        n *= 10;
+        *buf++ = (n >> 8) + '0';
+    }
+    *buf = 0;
+
+    return tmp;
+}
+char *fixed_to_string_F(uint16_t num, char *buf) {
+    bool neg = false;
+    uint32_t n;
+    char *tmp;
+
+    if (num & 0x8000) {
+        num = ~num + 1;
+        neg = true;
+    }
+
+    buf += 8;
+    n = num >> 8;
+    //to fix misalignment in temperature sensor
+    n -= temp_offset;
+    n *= 1.8;
+
+    n+= 32;
+    tmp = buf;
+    do {
+        *--tmp = (n % 10) + '0';
+        n /= 10;
+    } while (n);
+    if (neg)
+        *--tmp = '-';
+
+    n = num;
+    if (!(n & 0xFF)) {
+        *buf = 0;
+        return tmp;
+    }
+    *buf++ = '.';
+    while ((n &= 0xFF)) {
+        n *= 10;
+        *buf++ = (n >> 8) + '0';
+    }
+    *buf = 0;
+
+    return tmp;
+}
+char *fixed_to_string_K(uint16_t num, char *buf) {
+    bool neg = false;
+    uint32_t n;
+    char *tmp;
+
+    if (num & 0x8000) {
+        num = ~num + 1;
+        neg = true;
+    }
+
+    buf += 4;
+    n = num >> 8;
+    n -= temp_offset;
+    n += 272;
     tmp = buf;
     do {
         *--tmp = (n % 10) + '0';
@@ -152,13 +231,6 @@ void light(void) {
     return;
 }
 
-int getsw (void){
-	int switchstatus = PORTD >> 8;
-	int mask = 0xF;
-    switchstatus = switchstatus & mask;
-	return switchstatus;
-}
-
 /* Interrupt Service Routine */
 void user_isr(void) {
     static int timeoutcounter = 0;
@@ -182,7 +254,8 @@ void user_isr(void) {
 }
 
 int temp_F(temp) {
-    temp = (temp * 1.8) + 32;
+    temp = (temp * 1.8);
+    temp += 32;
 
     return temp;
 }
@@ -248,36 +321,38 @@ void labinit(void) {
 
 /* This function is called repetitively from the main program */
 void labwork(void) {
-    
-    
+
+
     // put the if statements testing the switches here, make it hierarcichal
-	if (getsw() = 2) {
+	if (getsw() == 2) {
 		format = 0;
 	}
-	else if (getsw() = 4) {
+	else if (getsw() == 4) {
 		format = 1;
 	}
-	else if (getsw() = 8) {
+	else if (getsw() == 8) {
 		format = 2;
 	}
-	else if (getsw() = 1;) {
-		while (getsw() = 1) {
-			getsw();
-			if (!getsw())){
-			break;
+	else if (getsw() == 1) {
+		while (getsw() == 1){
+
 			}
 		}
-	}
-    
-    
-    
+
+
+
+
     
     
     char buf[32];
     int temperature, temp;
+
+/* Send start condition and address of the temperature sensor with
+		write flag (lowest bit = 0) until the temperature sensor sends
+		acknowledge condition */
     do {
         i2c_start();
-    } while (!i2c_send(TEMP_SENSOR_ADDR << 1));
+    } while(!i2c_send(TEMP_SENSOR_ADDR << 1));
     /* Send register number we want to access */
     i2c_send(TEMP_SENSOR_REG_TEMP);
 
@@ -286,7 +361,7 @@ void labwork(void) {
     acknowledge condition */
     do {
         i2c_start();
-    } while (!i2c_send((TEMP_SENSOR_ADDR << 1) | 1));
+    } while(!i2c_send((TEMP_SENSOR_ADDR << 1) | 1));
 
     /* Now we can start receiving data from the sensor data register */
     temp = i2c_recv() << 8;
@@ -296,24 +371,23 @@ void labwork(void) {
     i2c_nack();
     i2c_stop();
 
-
-
-    //check syntax for getTemp and switch!!!
-    switch (temperature) {
+    switch (format) {
         case 1 :
-            temperature = temp_F(temp);
+            s = fixed_to_string_F(temp, buf);
             break;
         case 2 :
-            temperature = temp_K(temp);
+            s = fixed_to_string_K(temp, buf);
             break;
         default :
-            temperature = temp;
+
+            s = fixed_to_string_C(temp, buf);
 
     }
 
-    s = fixed_to_string(temp, buf);
 
-    switch (temperature) {
+
+
+    switch (format) {
         case 0 :
             t = s + strlen(s);
             *t++ = ' ';
@@ -337,7 +411,11 @@ void labwork(void) {
             break;
 
     }
-    display_string(1, s);
+
+    display_string(3, s);
+    //display_update();
+
+
     return;
 
 }
