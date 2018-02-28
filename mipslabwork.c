@@ -1,13 +1,10 @@
-/* mipslabwork.c
 
+/* mipslabwork.c
    This file written 2015 by F Lundevall
    Updated 2017-04-21 by F Lundevall
-
    This file should be changed by YOU! So you must
    add comment(s) here with your name(s) and date(s):
-
    This file modified 2017-04-31 by Ture Teknolog 
-
    For copyright and licensing, see file COPYING */
 
 #include <stdint.h>   /* Declarations of uint_32 and the like */
@@ -42,7 +39,6 @@ char textstring[] = "text, more text, and even more text!";
 char *s, *t;
 
 int format = 0;
-int pause = 0;
 
 uint32_t strlen(char *str) {
     uint32_t n = 0;
@@ -156,6 +152,13 @@ void light(void) {
     return;
 }
 
+int getsw (void){
+	int switchstatus = PORTD >> 8;
+	int mask = 0xF;
+    switchstatus = switchstatus & mask;
+	return switchstatus;
+}
+
 /* Interrupt Service Routine */
 void user_isr(void) {
     static int timeoutcounter = 0;
@@ -167,13 +170,13 @@ void user_isr(void) {
         if (timeoutcounter == 10) {
             timeoutcounter = 0;
 
-
             display_update();
 
 
         }
     }
-
+    
+	
  
     
 }
@@ -245,13 +248,26 @@ void labinit(void) {
 
 /* This function is called repetitively from the main program */
 void labwork(void) {
-    while (pause) {
-		 display_debug(pause);
-    }
     
     
     // put the if statements testing the switches here, make it hierarcichal
-    
+	if (getsw() = 2) {
+		format = 0;
+	}
+	else if (getsw() = 4) {
+		format = 1;
+	}
+	else if (getsw() = 8) {
+		format = 2;
+	}
+	else if (getsw() = 1;) {
+		while (getsw() = 1) {
+			getsw();
+			if (!getsw())){
+			break;
+			}
+		}
+	}
     
     
     
