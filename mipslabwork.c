@@ -43,6 +43,7 @@ char *s, *t;
 
 int format = 0;
 int pause = 0;
+
 uint32_t strlen(char *str) {
     uint32_t n = 0;
     while (*str++)
@@ -159,10 +160,6 @@ void light(void) {
 void user_isr(void) {
     static int timeoutcounter = 0;
 
-
-    // this is the interrupts for counting
-    //int buttonstatus = getbtns();
-
     if (IFS(0) & 0x100) {
 
         IFSCLR(0) = 0x100;
@@ -170,41 +167,20 @@ void user_isr(void) {
         if (timeoutcounter == 10) {
             timeoutcounter = 0;
 
-            display_debug(&IFS(0));
+
             display_update();
 
 
         }
     }
 
-    if (IFS(0) & 0x80) {
-        format = 0;
-        IFSCLR(0) = 0x80;
-    }
-    if (IFS(0) & 0x800) {
-        format = 2;
-        IFSCLR(0) = 0x800;
-    }
-
-    if (IFS(0) & 0x8000) {
-        format = 1;
-        IFSCLR(0) = 0x8000;
-    }
-
-    if (IFS(0) & 0x8) {
-        IFSCLR(0) = 0x8;
-        if (pause) {
-            pause--;
-        }
-        if (!pause) {
-            pause++;
-        }
-    }
+ 
+    
 }
 
 int temp_F(temp) {
     temp = (temp * 1.8) + 32;
-	
+
     return temp;
 }
 
@@ -233,15 +209,8 @@ void labinit(void) {
     *pointer = *pointer & mask;
     TRISDSET = 0xFE0;
 
-     timer();
-   
-    IFSSET(0) = 0x8888; //Enablar alla switchar
-	IECSET(0) = 0x8888;
-	IPCSET(3) = 0xA000000; //För switch 3
-	IPCSET(2) = 0xA000000; //För switch 2
-	IPCSET(1) = 0xA000000; //För switch 1
-	IPCSET(0) = 0xA000000; //För switch 0
-	
+    timer();
+
     enable_interrupt();
 
     // init of temperature reader
@@ -276,9 +245,19 @@ void labinit(void) {
 
 /* This function is called repetitively from the main program */
 void labwork(void) {
-    while(pause) {
-	}
-	char buf[32];
+    while (pause) {
+		 display_debug(pause);
+    }
+    
+    
+    // put the if statements testing the switches here, make it hierarcichal
+    
+    
+    
+    
+    
+    
+    char buf[32];
     int temperature, temp;
     do {
         i2c_start();
