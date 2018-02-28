@@ -176,23 +176,7 @@ void user_isr(void) {
         }
     }
     
-	if(getsw() = 2) {
-		format = 0;
-	}
-	else if(getsw() = 4) {
-		format = 1;
-	}
-	else if(getsw() = 8) {
-		format = 2;
-	}
-	else if (getsw() = 1;) {
-		while(getsw()){
-			getsw();
-			if(getsw()) == 0){
-				break;
-			}
-		}
-	}
+	
  
     
 }
@@ -267,7 +251,23 @@ void labwork(void) {
     
     
     // put the if statements testing the switches here, make it hierarcichal
-    
+	if (getsw() = 2) {
+		format = 0;
+	}
+	else if (getsw() = 4) {
+		format = 1;
+	}
+	else if (getsw() = 8) {
+		format = 2;
+	}
+	else if (getsw() = 1;) {
+		while (getsw() = 1) {
+			getsw();
+			if (!getsw())){
+			break;
+			}
+		}
+	}
     
     
     
