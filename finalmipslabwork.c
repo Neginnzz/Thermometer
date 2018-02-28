@@ -177,28 +177,28 @@ void user_isr(void) {
         }
     }
      
-	if(IFS(0) & 0x80){
-		format = 0;
-		IFSCLR(0) = 0x80;
-	} 
 	if(IFS(0) & 0x800){
-		format = 2;
+		format = 0;
 		IFSCLR(0) = 0x800;
 	} 
-     
 	if(IFS(0) & 0x8000){
-		format = 1;
+		format = 2;
 		IFSCLR(0) = 0x8000;
+	} 
+     
+	if(IFS(0) & 0x80000){
+		format = 1;
+		IFSCLR(0) = 0x80000;
 	}   
    
-	if( IFS(0) & 0x8( {
+	if( IFS(0) & 0x80( {
 		if(pause){
 			pause--;
-		IFSCLR(0) = 0x8;
+		IFSCLR(0) = 0x80;
 		}
 		if(!pause){
 			pause++;
-			IFSCLR(0) = 0x8;
+			IFSCLR(0) = 0x80;
 		}
 }
 
