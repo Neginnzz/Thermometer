@@ -35,7 +35,7 @@ enum TempSensorReg {
     TEMP_SENSOR_REG_LIMIT,
 };
 char textstring[] = "text, more text, and even more text!";
-
+int mytime = 0x0;
 // for printouts
 char *s, *t;
 
@@ -241,10 +241,9 @@ void user_isr(void) {
         timeoutcounter++;
         if (timeoutcounter == 10) {
             timeoutcounter = 0;
-
+			time2string( textstring, mytime );
+            tick( &mytime );
             display_update();
-
-
         }
     }
     
@@ -287,7 +286,7 @@ void labinit(void) {
 
     timer();
 
-    enable_interrupt();
+	enable_interrupt();
 
     // init of temperature reader
 
@@ -321,7 +320,7 @@ void labinit(void) {
 
 /* This function is called repetitively from the main program */
 void labwork(void) {
-
+  
 
     // put the if statements testing the switches here, make it hierarcichal
 	if (getsw() == 2) {
@@ -412,8 +411,10 @@ void labwork(void) {
 
     }
 
-    display_string(3, s);
-    //display_update();
+    display_string(1, s);
+    display_string( 3, textstring );
+
+
 
 
     return;

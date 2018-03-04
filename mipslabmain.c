@@ -55,10 +55,10 @@ int main(void) {
 	SPI2CONSET = 0x8000;
 	
 	display_init();
-	display_string(0, "the current");
+	display_string(0, "the current temp is:");
 	display_string(1, "temperature");
-	display_string(2, "is ");
-	display_string(3, "Welcome!");
+	display_string(2, "elapsed time:");
+	display_string(3, "time");
 	display_update();
 	
 	display_image(96, icon);
