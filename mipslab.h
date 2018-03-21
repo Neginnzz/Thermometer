@@ -53,3 +53,6 @@ void time2string( char *, int );
 int getbtns(void);
 int getsw(void);
 void enable_interrupt(void);
+/* functions added by student for project purposes*/
+void preset_time(void);
+void set_time(int);

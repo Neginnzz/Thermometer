@@ -7,7 +7,7 @@
 
 void preset_time(void){
 	int tensec = 1;
-	char[] minutestring;
+	char* minutestring;
 	while(1){
 		if(getbtns() == 0x1) break;
 		else if(getbtns() == 0x2){

@@ -37,9 +37,12 @@ enum TempSensorReg {
 char textstring[] = "text, more text, and even more text!";
 int mytime = 0x0;
 // for printouts
-char *s, *t;
+char *s, *t, extraS, extraT;
 
-int format = 0;
+int time; 
+int format = 0, format2 = 0;
+
+int max = 0, min = 0, mean = 0, svdtemp = 0;
 
 uint32_t strlen(char *str) {
     uint32_t n = 0;
@@ -241,9 +244,19 @@ void user_isr(void) {
         timeoutcounter++;
         if (timeoutcounter == 10) {
             timeoutcounter = 0;
+			static int timetest++;
 			time2string( textstring, mytime );
             tick( &mytime );
             display_update();
+			static int sum += svdtemp;
+			if (min > svdtemp) min = svdtemp;
+			if (max < svdtemp) max = svdtemp;
+			if(timetest == time) {
+				mean = sum/time;
+				sum = 0;
+				timetest = 0;
+			}
+				
         }
     }
     
@@ -252,17 +265,6 @@ void user_isr(void) {
     
 }
 
-int temp_F(temp) {
-    temp = (temp * 1.8);
-    temp += 32;
-
-    return temp;
-}
-
-int temp_K(temp) {
-    temp += 273;
-    return temp;
-}
 
 void timer(void) {
     T2CON = 0x0070;
@@ -275,7 +277,10 @@ void timer(void) {
     return;
 }
 
-
+void set_temp(number, numstring){
+	time = number;
+	time = numstring;
+}
 /* Lab-specific initialization goes here */
 void labinit(void) {
     volatile int *pointer = (volatile int *) 0xbf886110;
@@ -317,7 +322,6 @@ void labinit(void) {
 
     return;
 }
-
 /* This function is called repetitively from the main program */
 void labwork(void) {
   
@@ -325,19 +329,30 @@ void labwork(void) {
     // put the if statements testing the switches here, make it hierarcichal
 	if (getsw() == 2) {
 		format = 0;
+		format2 = 0;
 	}
 	else if (getsw() == 4) {
 		format = 1;
+		format2 = 1;
 	}
 	else if (getsw() == 8) {
 		format = 2;
+		format2 = 2;
 	}
 	else if (getsw() == 1) {
 		while (getsw() == 1){
 
 			}
 		}
-
+	if (getbtns() == 1) {
+		format = format2;
+	}
+	else if (getbtns() == 2) {
+		format = format2 + 3;
+	}
+	else if (getbtns() == 3) {
+		format = format2 + 6;
+	}
 
 
 
@@ -369,50 +384,138 @@ void labwork(void) {
     /* To stop receiving, send nack and stop */
     i2c_nack();
     i2c_stop();
-
+	if(format < 3) {
+		display_string(0, "the current temp is:");
+		display_string(2, "elapsed time:");
+	}
+	else if(format < 6){
+		display_string(0, "the min temp is:");
+		display_string(2, "the max temp is:");
+	}
+	else if(format < 9){
+		display_string(0, "the mean temp is:");
+		display_string(2, "the interval is:");
+	}
+	svdtemp = temp;
     switch (format) {
-        case 1 :
-            s = fixed_to_string_F(temp, buf);
-            break;
-        case 2 :
-            s = fixed_to_string_K(temp, buf);
-            break;
-        default :
-
-            s = fixed_to_string_C(temp, buf);
-
-    }
-
-
-
-
-    switch (format) {
+		// shows current temp
         case 0 :
+			s = fixed_to_string_C(temp, buf);
             t = s + strlen(s);
             *t++ = ' ';
             *t++ = 7;
             *t++ = 'C';
             *t++ = 0;
+			 display_string(1, s);
+			display_string( 3, textstring );
             break;
         case 1 :
+			s = fixed_to_string_F(temp, buf);
             t = s + strlen(s);
             *t++ = ' ';
             *t++ = 7;
             *t++ = 'F';
             *t++ = 0;
+			 display_string(1, s);
+			display_string( 3, textstring );
             break;
         case 2 :
+			s = fixed_to_string_K(temp, buf);
             t = s + strlen(s);
             *t++ = ' ';
             *t++ = 7;
             *t++ = 'K';
             *t++ = 0;
+			display_string(1, s);
+			display_string( 3, textstring );
             break;
+			//shows min and max
+		case 3 :
+			s = fixed_to_string_C(min, buf);
+			t = s + strlen(s);
+            *t++ = ' ';
+            *t++ = 7;
+            *t++ = 'C';
+            *t++ = 0;
+			display_string(1, s);
+			
+			extraS = fixed_to_string_C(max, buf);
+			extraT = extraS + strlen(extraS);
+            *extraT++ = ' ';
+            *extraT++ = 7;
+            *extraT++ = 'C';
+            *extraT++ = 0;
+			display_string(3, extraS);
+		break;
+		case 4 :
+			s = fixed_to_string_F(min, buf);
+			t = s + strlen(s);
+            *t++ = ' ';
+            *t++ = 7;
+            *t++ = 'F';
+            *t++ = 0;
+			display_string(1, s);
+			
+			extraS = fixed_to_string_F(max, buf);
+			extraT = extraS + strlen(extraS);
+            *extraT++ = ' ';
+            *extraT++ = 7;
+            *extraT++ = 'F';
+            *extraT++ = 0;
+			display_string(3, extraS);
+		break;
+		case 5 :
+			s = fixed_to_string_K(min, buf);
+			t = s + strlen(s);
+            *t++ = ' ';
+            *t++ = 7;
+            *t++ = 'K';
+            *t++ = 0;
+			display_string(1, s);
+			
+			extraS = fixed_to_string_K(max, buf);
+			extraT = extraS + strlen(extraS);
+            *extraT++ = ' ';
+            *extraT++ = 7;
+            *extraT++ = 'K';
+            *extraT++ = 0;
+			display_string(3, extraS);
+		break;
+		// shows mean and the preset time.
+		case 6 :
+			s = fixed_to_string_C(mean, buf);
+            t = s + strlen(s);
+            *t++ = ' ';
+            *t++ = 7;
+            *t++ = 'C';
+            *t++ = 0;
+			 display_string(1, s);
+			display_string( 3, time);
+		break;
+		case 7 :
+			s = fixed_to_string_F(temp, buf);
+            t = s + strlen(s);
+            *t++ = ' ';
+            *t++ = 7;
+            *t++ = 'F';
+            *t++ = 0;
+			 display_string(1, s);
+			display_string( 3,  time);
+		break;
+		case 8 :
+			s = fixed_to_string_K(temp, buf);
+            t = s + strlen(s);
+            *t++ = ' ';
+            *t++ = 7;
+            *t++ = 'K';
+            *t++ = 0;
+			 display_string(1, s);
+			display_string( 3,  time);
+		break;
 
     }
 
-    display_string(1, s);
-    display_string( 3, textstring );
+   
 
 
 

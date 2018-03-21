@@ -54,7 +54,19 @@ int main(void) {
 	/* SPI2CON bit ON = 1; */
 	SPI2CONSET = 0x8000;
 	
+	
+	
+	
 	display_init();
+	display_string(0, "choose time for mean");
+	display_string(1, "use button 2 to exit");
+	display_string(2, "time in tens of seconds:");
+	display_string(3, "time");
+	display_update();
+	
+	
+	preset_time();
+	
 	display_string(0, "the current temp is:");
 	display_string(1, "temperature");
 	display_string(2, "elapsed time:");
